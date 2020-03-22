@@ -37,7 +37,10 @@ namespace Minesweeper.Controllers {
                 int x = generator.Next(0, numCells);
                 int y = generator.Next(0, numCells);
 
-                gameBoard[x, y].isBomb = true;
+                if(!gameBoard[x, y].isBomb) {
+                    gameBoard[x, y].isBomb = true;
+                }
+                
             }
 
         }

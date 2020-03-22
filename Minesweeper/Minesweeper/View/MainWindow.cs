@@ -5,6 +5,8 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Imaging;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -13,17 +15,21 @@ using System.Windows.Forms;
 namespace Minesweeper {
     public partial class MainWindow : Form {
 
+        private readonly string resourcesPath;
+
         private GameController mainController;
         public MainWindow() {
             InitializeComponent();
             mainController = new GameController();
+            string assemblyPath = Path.GetDirectoryName(Application.ExecutablePath);
+            resourcesPath = Path.GetFullPath(Path.Combine(assemblyPath, @"..\..\"));
         }
 
         private void MainWindow_Load(object sender, EventArgs e) {
 
             //Display a radio button menu to enable the user to choose a dificulty that is then passed to initBoard()
 
-            mainController.initBoard("medium");
+            mainController.initBoard("easy");
 
             /*foreach(Cell x in mainController.gameBoard) {
                 Console.WriteLine(x.isBomb);
@@ -34,7 +40,7 @@ namespace Minesweeper {
 
         private void initViewGrid() {
 
-            PictureBox mainBox = new PictureBox();
+            Panel mainBox = new Panel();
             mainBox.Width = Width;
             mainBox.Height = Height;
             mainBox.Top = (Height * 10) / 100;
@@ -44,12 +50,12 @@ namespace Minesweeper {
             Controls.Add(mainBox);
         }
 
-        private void createGrid(PictureBox mainBox) {
+        private void createGrid(Panel mainBox) {
 
             Color backColor;
             
             foreach(Cell c in mainController.gameBoard) {
-                PictureBox cell = new PictureBox();
+                Panel cell = new Panel();
 
                 backColor = Color.Gray;
                 cell.Location = new Point(c.xCoord + (25 * c.xCoord), c.yCoord + (25 * c.yCoord));
@@ -64,7 +70,7 @@ namespace Minesweeper {
         }
 
         private void cellClicked(object sender, EventArgs e) {
-            PictureBox clickedCell = (PictureBox)sender;
+            Panel clickedCell = (Panel)sender;
 
             string[] cellCoords = clickedCell.Name.Split(' ');
 
@@ -76,7 +82,9 @@ namespace Minesweeper {
             clickedCell.BorderStyle = BorderStyle.None;
 
             if (clickedCellObj.isBomb) {
-                clickedCell.BackColor = Color.Black;
+                clickedCell.BackgroundImage = Properties.Resources.bomb;
+                clickedCell.BackgroundImageLayout = ImageLayout.Center;
+
             }
         }
     }
