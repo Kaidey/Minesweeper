@@ -26,7 +26,7 @@ namespace Minesweeper.Controllers {
 
             for(int i = 0; i < numCells; i++) {
                 for(int k = 0; k < numCells; k++) {
-                    gameBoard[i, k] = new Cell(false, false, false);
+                    gameBoard[i, k] = new Cell(i, k, false, false, false);
                 } 
             }
             

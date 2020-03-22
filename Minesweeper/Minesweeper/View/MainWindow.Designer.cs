@@ -23,21 +23,31 @@
         /// the contents of this method with the code editor.
         /// </summary>
         private void InitializeComponent() {
+            this.components = new System.ComponentModel.Container();
+            this.cellBindingSource = new System.Windows.Forms.BindingSource(this.components);
+            ((System.ComponentModel.ISupportInitialize)(this.cellBindingSource)).BeginInit();
             this.SuspendLayout();
             // 
-            // Form1
+            // cellBindingSource
+            // 
+            this.cellBindingSource.DataSource = typeof(Minesweeper.Model.Cell);
+            // 
+            // MainWindow
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(800, 450);
-            this.Name = "Form1";
+            this.Name = "MainWindow";
             this.Text = "Minesweeper";
             this.Load += new System.EventHandler(this.MainWindow_Load);
+            ((System.ComponentModel.ISupportInitialize)(this.cellBindingSource)).EndInit();
             this.ResumeLayout(false);
 
         }
 
         #endregion
+
+        private System.Windows.Forms.BindingSource cellBindingSource;
     }
 }
 
