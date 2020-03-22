@@ -23,7 +23,7 @@ namespace Minesweeper {
 
             //Display a radio button menu to enable the user to choose a dificulty that is then passed to initBoard()
 
-            mainController.initBoard("easy");
+            mainController.initBoard("medium");
 
             /*foreach(Cell x in mainController.gameBoard) {
                 Console.WriteLine(x.isBomb);
@@ -73,8 +73,9 @@ namespace Minesweeper {
 
             Cell clickedCellObj = mainController.gameBoard[cellX, cellY];
 
+            clickedCell.BorderStyle = BorderStyle.None;
+
             if (clickedCellObj.isBomb) {
-                clickedCell.BorderStyle = BorderStyle.None;
                 clickedCell.BackColor = Color.Black;
             }
         }
