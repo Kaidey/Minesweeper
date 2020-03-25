@@ -26,12 +26,15 @@ namespace Minesweeper.Model {
         public bool isBomb { get; set; }
         public bool hasFlag { get; set; }
 
+        public bool isChecked { get; set; }
+
         public Cell(int x, int y, bool open, bool bomb, bool flag) {
             xCoord = x;
             yCoord = y;
             isOpen = open;
             isBomb = bomb;
             hasFlag = flag;
+            isChecked = false;
         }
     }
 }
