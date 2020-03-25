@@ -15,8 +15,14 @@ using System.Windows.Forms;
 namespace Minesweeper {
     public partial class MainWindow : Form {
 
+        private const int CELL_SIZE = 25;
+        private const int WIDTH_OFFSET = 16;
+        private const int HEIGHT_OFFSET = 8;
+        private string difficulty;
+
         private GameController mainController;
         private Panel mainBox;
+        
         public MainWindow() {
             InitializeComponent();
             mainController = new GameController();
@@ -26,26 +32,45 @@ namespace Minesweeper {
 
             //Display a radio button menu to enable the user to choose a dificulty that is then passed to initBoard()
 
-            mainController.initBoard("easy");
+            difficulty = "hard";
 
-            /*foreach(Cell x in mainController.gameBoard) {
-                Console.WriteLine(x.isBomb);
-            }*/
+            mainController.initBoard(difficulty);
 
             initViewGrid();
+            
         }
 
         private void initViewGrid() {
 
+            int boardSize = mainController.getBoardSize(difficulty);
+
             mainBox = new Panel();
-            mainBox.Width = Width;
-            mainBox.Height = Height;
-            mainBox.Top = (Height * 10) / 100;
+
+            //Cell borders ocupy pixel space in the form, so, while the first cell starts at x = 0 and y = 0
+            //the second starts at x = 26 and y = 0 despite the side length being = 25
+            //This little offset needs to be taken in to account when drawing the cells so besides the ammount of cells * their side length (CELL_SIZE)
+            //we also need to add 1 pixel * the number of cells wich is just boardSize
+            mainBox.Width = boardSize * CELL_SIZE + boardSize;
+            mainBox.Height = boardSize * CELL_SIZE + boardSize;
             mainBox.BackColor = Color.Black;
             mainBox.Name = "mainBox";
+            mainBox.BorderStyle = BorderStyle.None;
+
+            Rectangle screenRectangle = RectangleToScreen(ClientRectangle);
+
+            int titleBarHeight = screenRectangle.Top - Top;
+            int topOffset = (Height * 15) / 100;
+
+            Width = mainBox.Width + WIDTH_OFFSET;
+            Height = mainBox.Height + titleBarHeight + topOffset + HEIGHT_OFFSET;
+
+            mainBox.Top = topOffset;
+
             createGrid();
 
             Controls.Add(mainBox);
+
+            Console.WriteLine(Bounds);
         }
 
         private void createGrid() {
@@ -56,13 +81,17 @@ namespace Minesweeper {
                 Panel cell = new Panel();
 
                 backColor = Color.Gray;
-                cell.Location = new Point(c.xCoord + (25 * c.xCoord), c.yCoord + (25 * c.yCoord));
-                cell.Size = new Size(25, 25);
+                int xOffset = CELL_SIZE * c.xCoord;
+                int yOffset = CELL_SIZE * c.yCoord;
+
+                cell.Location = new Point(c.xCoord + xOffset, c.yCoord + yOffset);
+                cell.Size = new Size(CELL_SIZE, CELL_SIZE);
                 cell.BackColor = backColor;
                 cell.BorderStyle = BorderStyle.Fixed3D;
                 cell.MouseClick += new MouseEventHandler(this.cellClicked);
                 cell.Name = c.xCoord + " " + c.yCoord;
                 cell.BackgroundImageLayout = ImageLayout.Center;
+
                 mainBox.Controls.Add(cell);
 
             }
@@ -76,13 +105,14 @@ namespace Minesweeper {
             int cellX = Convert.ToInt32(cellCoords[0]);
             int cellY = Convert.ToInt32(cellCoords[1]);
 
-            if(e.Button == MouseButtons.Right) {
-                handleRightClick(clickedCell, mainController.getCellByCoords(cellX, cellY));
-            } else {
-                handleLeftClick(clickedCell, mainController.getCellByCoords(cellX, cellY));
+            switch (e.Button) {
+                case MouseButtons.Right:
+                    handleRightClick(clickedCell, mainController.getCellByCoords(cellX, cellY));
+                    break;
+                case MouseButtons.Left:
+                    handleLeftClick(clickedCell, mainController.getCellByCoords(cellX, cellY));
+                    break;
             }
-
-            
         }
 
         private void handleRightClick(Panel clickedCell, Cell clickedCellObj) {
@@ -151,6 +181,10 @@ namespace Minesweeper {
             //Reveal all bombs
             clickedCell.BackgroundImage = Properties.Resources.bomb;
 
+        }
+
+        private void MainWindow_ResizeEnd(object sender, EventArgs e) {
+            Console.WriteLine(Bounds);
         }
     }
 }

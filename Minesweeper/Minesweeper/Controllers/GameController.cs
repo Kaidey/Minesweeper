@@ -46,6 +46,11 @@ namespace Minesweeper.Controllers {
 
         }
 
+        public int getBoardSize(string difficulty) {
+
+            return DIFICULTY[difficulty].Item1;
+        }
+
         public Cell getCellByCoords(int x, int y) {
             return gameBoard[x, y];
         }
