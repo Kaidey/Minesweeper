@@ -37,12 +37,11 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(284, 261);
-            //this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
+            this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedSingle;
             this.MaximizeBox = false;
             this.Name = "MainWindow";
             this.Text = "Minesweeper";
             this.Load += new System.EventHandler(this.MainWindow_Load);
-            this.ResizeEnd += new System.EventHandler(this.MainWindow_ResizeEnd);
             ((System.ComponentModel.ISupportInitialize)(this.cellBindingSource)).EndInit();
             this.ResumeLayout(false);
 

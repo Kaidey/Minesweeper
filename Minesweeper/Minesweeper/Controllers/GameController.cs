@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace Minesweeper.Controllers {
     class GameController {
@@ -49,10 +50,6 @@ namespace Minesweeper.Controllers {
         public int getBoardSize(string difficulty) {
 
             return DIFICULTY[difficulty].Item1;
-        }
-
-        public Cell getCellByCoords(int x, int y) {
-            return gameBoard[x, y];
         }
 
         public List<Cell> checkNeighbours(Cell cell) {
@@ -109,6 +106,84 @@ namespace Minesweeper.Controllers {
             }
 
             return bombCounter;
+
+        }
+
+        public void handleRightClick(Panel clickedCell, Panel mainBox) {
+
+            string[] cellCoords = clickedCell.Name.Split(' ');
+
+            int cellX = Convert.ToInt32(cellCoords[0]);
+            int cellY = Convert.ToInt32(cellCoords[1]);
+
+            if (!gameBoard[cellX, cellY].isOpen) {
+                clickedCell.BackgroundImage = Properties.Resources.flag;
+            }
+        }
+
+        public void handleLeftClick(Panel clickedCell, Panel mainBox) {
+
+            string[] cellCoords = clickedCell.Name.Split(' ');
+
+            int cellX = Convert.ToInt32(cellCoords[0]);
+            int cellY = Convert.ToInt32(cellCoords[1]);
+
+            clickedCell.BorderStyle = BorderStyle.None;
+            gameBoard[cellX, cellY].isOpen = true;
+
+            if (gameBoard[cellX, cellY].isBomb) {
+                gameOverBoard(clickedCell);
+            } else {
+
+                revealNoBombNeighbours(gameBoard[cellX, cellY], mainBox);
+            }
+
+        }
+
+        private void revealNoBombNeighbours(Cell startingPoint, Panel mainBox) {
+
+            List<Cell> neighbours = checkNeighbours(startingPoint);
+
+            int numBombs = checkForBombs(neighbours, startingPoint);
+
+            if (numBombs == 0) {
+
+                foreach (Cell c in neighbours) {
+
+                    revealCell(c, mainBox, false, numBombs);
+
+                    c.isChecked = true;
+
+                    revealNoBombNeighbours(c, mainBox);
+
+                }
+
+            } else {
+                revealCell(startingPoint, mainBox, true, numBombs);
+            }
+
+
+        }
+
+        private void revealCell(Cell c, Panel mainBox, bool hasBombedNeighs, int numBombs) {
+
+            Control[] mainBoxControls = mainBox.Controls.Find(c.xCoord + " " + c.yCoord, false);
+
+            Panel panel = (Panel)mainBoxControls[0];
+
+            panel.BorderStyle = BorderStyle.None;
+            c.isOpen = true;
+
+            if (hasBombedNeighs) {
+                Label numBombsDisplay = new Label();
+                numBombsDisplay.Text = Convert.ToString(numBombs);
+                panel.Controls.Add(numBombsDisplay);
+            }
+        }
+
+        private void gameOverBoard(Panel clickedCell) {
+            //Reveal all bombs
+            clickedCell.BackgroundImage = Properties.Resources.bomb;
 
         }
 

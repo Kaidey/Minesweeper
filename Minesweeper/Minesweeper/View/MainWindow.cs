@@ -22,7 +22,7 @@ namespace Minesweeper {
 
         private GameController mainController;
         private Panel mainBox;
-        
+
         public MainWindow() {
             InitializeComponent();
             mainController = new GameController();
@@ -37,7 +37,7 @@ namespace Minesweeper {
             mainController.initBoard(difficulty);
 
             initViewGrid();
-            
+
         }
 
         private void initViewGrid() {
@@ -69,15 +69,13 @@ namespace Minesweeper {
             createGrid();
 
             Controls.Add(mainBox);
-
-            Console.WriteLine(Bounds);
         }
 
         private void createGrid() {
 
             Color backColor;
-            
-            foreach(Cell c in mainController.gameBoard) {
+
+            foreach (Cell c in mainController.gameBoard) {
                 Panel cell = new Panel();
 
                 backColor = Color.Gray;
@@ -98,93 +96,17 @@ namespace Minesweeper {
         }
 
         private void cellClicked(object sender, MouseEventArgs e) {
+
             Panel clickedCell = (Panel)sender;
-
-            string[] cellCoords = clickedCell.Name.Split(' ');
-
-            int cellX = Convert.ToInt32(cellCoords[0]);
-            int cellY = Convert.ToInt32(cellCoords[1]);
 
             switch (e.Button) {
                 case MouseButtons.Right:
-                    handleRightClick(clickedCell, mainController.getCellByCoords(cellX, cellY));
+                    mainController.handleRightClick(clickedCell, mainBox);
                     break;
                 case MouseButtons.Left:
-                    handleLeftClick(clickedCell, mainController.getCellByCoords(cellX, cellY));
+                    mainController.handleLeftClick(clickedCell, mainBox);
                     break;
             }
-        }
-
-        private void handleRightClick(Panel clickedCell, Cell clickedCellObj) {
-
-            if (!clickedCellObj.isOpen) {
-                clickedCell.BackgroundImage = Properties.Resources.flag;
-            }
-        }
-
-        private void handleLeftClick(Panel clickedCell, Cell clickedCellObj) {
-
-            clickedCell.BorderStyle = BorderStyle.None;
-            clickedCellObj.isOpen = true;
-
-            if (clickedCellObj.isBomb) {
-                gameOverBoard(clickedCell);
-            } else {
-               
-                revealNoBombNeighbours(clickedCellObj);
-            }
-
-        }
-
-        private void revealNoBombNeighbours(Cell startingPoint) {
-
-            List<Cell> neighbours = mainController.checkNeighbours(startingPoint);
-
-            int numBombs = mainController.checkForBombs(neighbours, startingPoint);
-
-            if (numBombs == 0) {
-
-                foreach (Cell c in neighbours) {
-
-                    revealCell(c, mainBox, false, numBombs);
-
-                    c.isChecked = true;
-
-                    revealNoBombNeighbours(c);
-
-                }
-                
-            } else {
-                revealCell(startingPoint, mainBox, true, numBombs);
-            }
-
-
-        }
-
-        private void revealCell (Cell c, Panel mainBox, bool hasBombedNeighs, int numBombs) {
-
-            Control[] mainBoxControls = mainBox.Controls.Find(c.xCoord + " " + c.yCoord, false);
-
-            Panel panel = (Panel)mainBoxControls[0];
-
-            panel.BorderStyle = BorderStyle.None;
-            c.isOpen = true;
-
-            if (hasBombedNeighs) {
-                Label numBombsDisplay = new Label();
-                numBombsDisplay.Text = Convert.ToString(numBombs);
-                panel.Controls.Add(numBombsDisplay);
-            }
-        }
-
-        private void gameOverBoard(Panel clickedCell) {
-            //Reveal all bombs
-            clickedCell.BackgroundImage = Properties.Resources.bomb;
-
-        }
-
-        private void MainWindow_ResizeEnd(object sender, EventArgs e) {
-            Console.WriteLine(Bounds);
         }
     }
 }
