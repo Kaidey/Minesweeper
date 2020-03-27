@@ -1,6 +1,7 @@
 ﻿using Minesweeper.Model;
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -15,10 +16,12 @@ namespace Minesweeper.Controllers {
             {"hard", new Tuple<int, int>(30,100)}
         };
 
+        private Cell clickedCell;
+
         //MultiDimensional array declaration. Cell[][] would be the declaration for a jagged array
         public Cell[,] gameBoard { get; set; }
 
-        public void initBoard(string mode) {
+        public void InitBoard(string mode) {
 
             int numBombs = DIFICULTY[mode].Item2;
             int numCells = DIFICULTY[mode].Item1;
@@ -47,32 +50,14 @@ namespace Minesweeper.Controllers {
 
         }
 
-        public int getBoardSize(string difficulty) {
+        public int GetBoardSize(string difficulty) {
 
             return DIFICULTY[difficulty].Item1;
         }
 
-        public List<Cell> checkNeighbours(Cell cell) {
+        private List<Cell> GetNeighbours(Cell cell) {
 
             List<Cell> neighs = new List<Cell>();
-
-            /*new List<Cell> {
-                gameBoard[cell.xCoord, cell.yCoord - 1],
-
-                gameBoard[cell.xCoord, cell.yCoord + 1],
-
-                gameBoard[cell.xCoord - 1, cell.yCoord],
-
-                gameBoard[cell.xCoord + 1, cell.yCoord],
-
-                gameBoard[cell.xCoord - 1, cell.yCoord - 1],
-
-                gameBoard[cell.xCoord + 1, cell.yCoord - 1],
-
-                gameBoard[cell.xCoord - 1, cell.yCoord + 1],
-
-                gameBoard[cell.xCoord + 1, cell.yCoord + 1]
-            };*/
 
             foreach (Cell c in gameBoard) {
 
@@ -95,93 +80,158 @@ namespace Minesweeper.Controllers {
 
         }
 
-        public int checkForBombs(List<Cell> neighbours, Cell clicked) {
-
-            int bombCounter = 0;
-
-            foreach(Cell c in neighbours) {
-                if (c.isBomb) {
-                    bombCounter++;
-                }
-            }
-
-            return bombCounter;
-
-        }
-
-        public void handleRightClick(Panel clickedCell, Panel mainBox) {
+        private Cell GetCellObjectFromPanel(Panel clickedCell) {
 
             string[] cellCoords = clickedCell.Name.Split(' ');
 
             int cellX = Convert.ToInt32(cellCoords[0]);
             int cellY = Convert.ToInt32(cellCoords[1]);
 
-            if (!gameBoard[cellX, cellY].isOpen) {
-                clickedCell.BackgroundImage = Properties.Resources.flag;
-            }
+            return gameBoard[cellX, cellY];
         }
 
-        public void handleLeftClick(Panel clickedCell, Panel mainBox) {
+        public bool CellIsOpen(Panel clickedCell) {
 
-            string[] cellCoords = clickedCell.Name.Split(' ');
+            return GetCellObjectFromPanel(clickedCell).isOpen;
+        }
 
-            int cellX = Convert.ToInt32(cellCoords[0]);
-            int cellY = Convert.ToInt32(cellCoords[1]);
+        public void ClickHandler(Panel clickC, MouseEventArgs e, Panel mainBox) {
 
-            clickedCell.BorderStyle = BorderStyle.None;
-            gameBoard[cellX, cellY].isOpen = true;
+            clickedCell = GetCellObjectFromPanel(clickC);
 
-            if (gameBoard[cellX, cellY].isBomb) {
-                gameOverBoard(clickedCell);
+            if (!clickedCell.isOpen) {
+
+                switch (e.Button) {
+                    case MouseButtons.Right:
+                        HandleRightClick(clickC);
+                        break;
+                    case MouseButtons.Left:
+                        HandleLeftClick(clickC, mainBox);
+                        break;
+                }
+
+            }else if (e.Button == MouseButtons.Middle) {
+                HandleMiddleClick( mainBox);
+            }
+
+        }
+
+        public void HandleRightClick(Panel clickC) {
+
+            clickC.BackgroundImage = Properties.Resources.flag;
+            clickedCell.hasFlag = true;
+        }
+
+        public void HandleLeftClick(Panel clickC, Panel mainBox) {
+
+            if (clickedCell.isBomb) {
+                RevealCell(clickedCell, mainBox);
+                GameOverBoard(clickC);
             } else {
 
-                revealNoBombNeighbours(gameBoard[cellX, cellY], mainBox);
+                if (clickedCell.hasFlag) {
+                    clickedCell.hasFlag = false;
+                    clickC.BackgroundImage = null;
+                }
+
+                ExpandCell(clickedCell, mainBox);
             }
 
         }
 
-        private void revealNoBombNeighbours(Cell startingPoint, Panel mainBox) {
+        private void ExpandCell(Cell currentCell, Panel mainBox) {
 
-            List<Cell> neighbours = checkNeighbours(startingPoint);
+            List<Cell> neighbours = GetNeighbours(currentCell);
 
-            int numBombs = checkForBombs(neighbours, startingPoint);
+            //LINQ
+            IEnumerable<Cell> query = from neighbor in neighbours where neighbor.isBomb select neighbor;
 
-            if (numBombs == 0) {
+            currentCell.numAdjacentBombs = query.Count();
 
-                foreach (Cell c in neighbours) {
+            if (currentCell.numAdjacentBombs == 0) {
 
-                    revealCell(c, mainBox, false, numBombs);
+                foreach(Cell neigh in neighbours) {
 
-                    c.isChecked = true;
-
-                    revealNoBombNeighbours(c, mainBox);
+                    neigh.isChecked = true;
+                    ExpandCell(neigh, mainBox);
+                    RevealCell(currentCell, mainBox);
 
                 }
 
             } else {
-                revealCell(startingPoint, mainBox, true, numBombs);
-            }
 
+                RevealCell(currentCell, mainBox);
+
+            }
 
         }
 
-        private void revealCell(Cell c, Panel mainBox, bool hasBombedNeighs, int numBombs) {
+        public void HandleMiddleClick(Panel mainBox) {
 
-            Control[] mainBoxControls = mainBox.Controls.Find(c.xCoord + " " + c.yCoord, false);
+            List<Cell> neighs = GetNeighbours(clickedCell);
 
-            Panel panel = (Panel)mainBoxControls[0];
+            IEnumerable<Cell> bombedNeighs = from neighour in neighs where neighour.isBomb select neighour;
 
-            panel.BorderStyle = BorderStyle.None;
-            c.isOpen = true;
+            IEnumerable<Cell> notFlagged = from bNeigh in bombedNeighs where !bNeigh.hasFlag select bNeigh;
 
-            if (hasBombedNeighs) {
-                Label numBombsDisplay = new Label();
-                numBombsDisplay.Text = Convert.ToString(numBombs);
-                panel.Controls.Add(numBombsDisplay);
+            if(notFlagged.Count() > 0) {
+                Console.WriteLine("Game Over");
+                //GameOverBoard();
+                //Exit
+            } else {
+
+                IEnumerable<Cell> notBombedNeighs = neighs.Except(bombedNeighs);
+
+                foreach(Cell c in notBombedNeighs) {
+                    RevealCell(c, mainBox);
+                }
+            }
+
+        }
+
+        private void RevealCell(Cell toReveal, Panel mainBox) {
+
+            Control[] controls = mainBox.Controls.Find(toReveal.xCoord + " " + toReveal.yCoord, false);
+
+            Panel toRevealPanel = (Panel)controls[0];
+
+            
+            toRevealPanel.BorderStyle = BorderStyle.None;
+            toRevealPanel.BackColor = Color.Gray;
+            toReveal.isOpen = true;
+
+            switch (toReveal.numAdjacentBombs) {
+
+                case 1:
+                    toRevealPanel.BackgroundImage = Properties.Resources._1;
+                    break;
+                case 2:
+                    toRevealPanel.BackgroundImage = Properties.Resources._2;
+                    break;
+                case 3:
+                    toRevealPanel.BackgroundImage = Properties.Resources._3;
+                    break;
+                case 4:
+                    toRevealPanel.BackgroundImage = Properties.Resources._4;
+                    break;
+                case 5:
+                    toRevealPanel.BackgroundImage = Properties.Resources._5;
+                    break;
+                case 6:
+                    toRevealPanel.BackgroundImage = Properties.Resources._6;
+                    break;
+                case 7:
+                    toRevealPanel.BackgroundImage = Properties.Resources._7;
+                    break;
+                case 8:
+                    toRevealPanel.BackgroundImage = Properties.Resources._8;
+                    break;
+                default:
+                    break;
             }
         }
 
-        private void gameOverBoard(Panel clickedCell) {
+        private void GameOverBoard(Panel clickedCell) {
             //Reveal all bombs
             clickedCell.BackgroundImage = Properties.Resources.bomb;
 

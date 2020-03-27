@@ -34,15 +34,15 @@ namespace Minesweeper {
 
             difficulty = "hard";
 
-            mainController.initBoard(difficulty);
+            mainController.InitBoard(difficulty);
 
-            initViewGrid();
+            InitViewGrid();
 
         }
 
-        private void initViewGrid() {
+        private void InitViewGrid() {
 
-            int boardSize = mainController.getBoardSize(difficulty);
+            int boardSize = mainController.GetBoardSize(difficulty);
 
             mainBox = new Panel();
 
@@ -52,7 +52,7 @@ namespace Minesweeper {
             //we also need to add 1 pixel * the number of cells wich is just boardSize
             mainBox.Width = boardSize * CELL_SIZE + boardSize;
             mainBox.Height = boardSize * CELL_SIZE + boardSize;
-            mainBox.BackColor = Color.Black;
+            mainBox.BackColor = Color.Transparent;
             mainBox.Name = "mainBox";
             mainBox.BorderStyle = BorderStyle.None;
 
@@ -66,47 +66,37 @@ namespace Minesweeper {
 
             mainBox.Top = topOffset;
 
-            createGrid();
+            CreateGrid();
 
             Controls.Add(mainBox);
         }
 
-        private void createGrid() {
-
-            Color backColor;
+        private void CreateGrid() {
 
             foreach (Cell c in mainController.gameBoard) {
                 Panel cell = new Panel();
 
-                backColor = Color.Gray;
                 int xOffset = CELL_SIZE * c.xCoord;
                 int yOffset = CELL_SIZE * c.yCoord;
 
                 cell.Location = new Point(c.xCoord + xOffset, c.yCoord + yOffset);
                 cell.Size = new Size(CELL_SIZE, CELL_SIZE);
-                cell.BackColor = backColor;
-                cell.BorderStyle = BorderStyle.Fixed3D;
-                cell.MouseClick += new MouseEventHandler(this.cellClicked);
+                cell.BackColor = Color.SlateGray;
+                cell.BorderStyle = BorderStyle.FixedSingle;
                 cell.Name = c.xCoord + " " + c.yCoord;
                 cell.BackgroundImageLayout = ImageLayout.Center;
+
+                cell.MouseClick += new MouseEventHandler(CellClicked);
 
                 mainBox.Controls.Add(cell);
 
             }
         }
 
-        private void cellClicked(object sender, MouseEventArgs e) {
+        private void CellClicked(object sender, MouseEventArgs e) {
 
-            Panel clickedCell = (Panel)sender;
+            mainController.ClickHandler((Panel)sender, e, mainBox);
 
-            switch (e.Button) {
-                case MouseButtons.Right:
-                    mainController.handleRightClick(clickedCell, mainBox);
-                    break;
-                case MouseButtons.Left:
-                    mainController.handleLeftClick(clickedCell, mainBox);
-                    break;
-            }
         }
     }
 }

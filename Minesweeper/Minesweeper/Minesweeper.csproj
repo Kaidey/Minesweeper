@@ -89,5 +89,32 @@
   <ItemGroup>
     <None Include="flag.png" />
   </ItemGroup>
+  <ItemGroup>
+    <None Include="1.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="2.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="3.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="4.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="5.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="Resources\" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="6.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="7.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="8.png" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

@@ -36,5 +36,9 @@ namespace Minesweeper.Model {
             hasFlag = flag;
             isChecked = false;
         }
+        override public string ToString() {
+            return ("Cell at coordinates (" + xCoord + "," + yCoord + ") has " + numAdjacentBombs + 
+                " adjacent bombs. IsChecked = " + isChecked + " isBomb = " + isBomb + " hasFlag = " + hasFlag);
+        }
     }
 }
