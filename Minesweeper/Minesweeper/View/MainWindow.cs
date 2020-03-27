@@ -95,7 +95,9 @@ namespace Minesweeper {
 
         private void CellClicked(object sender, MouseEventArgs e) {
 
-            mainController.ClickHandler((Panel)sender, e, mainBox);
+            if (!mainController.gameOver) {
+                mainController.ClickHandler((Panel)sender, e, mainBox);
+            }
 
         }
     }

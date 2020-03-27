@@ -17,6 +17,7 @@ namespace Minesweeper.Controllers {
         };
 
         private Cell clickedCell;
+        public bool gameOver = false;
 
         //MultiDimensional array declaration. Cell[][] would be the declaration for a jagged array
         public Cell[,] gameBoard { get; set; }
@@ -80,14 +81,22 @@ namespace Minesweeper.Controllers {
 
         }
 
-        private Cell GetCellObjectFromPanel(Panel clickedCell) {
+        private Cell GetCellObjectFromPanel(Panel panel) {
 
-            string[] cellCoords = clickedCell.Name.Split(' ');
+            string[] cellCoords = panel.Name.Split(' ');
 
             int cellX = Convert.ToInt32(cellCoords[0]);
             int cellY = Convert.ToInt32(cellCoords[1]);
 
             return gameBoard[cellX, cellY];
+        }
+
+        private Panel GetPanelFromCellObj(Cell cellObj, Panel mainBox) {
+
+            Control[] controls = mainBox.Controls.Find(cellObj.xCoord + " " + cellObj.yCoord, false);
+
+            return (Panel)controls[0];
+
         }
 
         public bool CellIsOpen(Panel clickedCell) {
@@ -126,7 +135,9 @@ namespace Minesweeper.Controllers {
 
             if (clickedCell.isBomb) {
                 RevealCell(clickedCell, mainBox);
-                GameOverBoard(clickC);
+                clickC.BackColor = Color.Red;
+                GameOverBoard(mainBox);
+                gameOver = true;
             } else {
 
                 if (clickedCell.hasFlag) {
@@ -175,9 +186,9 @@ namespace Minesweeper.Controllers {
             IEnumerable<Cell> notFlagged = from bNeigh in bombedNeighs where !bNeigh.hasFlag select bNeigh;
 
             if(notFlagged.Count() > 0) {
-                Console.WriteLine("Game Over");
-                //GameOverBoard();
-                //Exit
+                GameOverBoard(mainBox);
+                notFlagged.ToList().ForEach(cell => GetPanelFromCellObj(cell, mainBox).BackColor = Color.Red);
+                gameOver = true;
             } else {
 
                 IEnumerable<Cell> notBombedNeighs = neighs.Except(bombedNeighs);
@@ -191,9 +202,7 @@ namespace Minesweeper.Controllers {
 
         private void RevealCell(Cell toReveal, Panel mainBox) {
 
-            Control[] controls = mainBox.Controls.Find(toReveal.xCoord + " " + toReveal.yCoord, false);
-
-            Panel toRevealPanel = (Panel)controls[0];
+            Panel toRevealPanel = GetPanelFromCellObj(toReveal, mainBox);
 
             
             toRevealPanel.BorderStyle = BorderStyle.None;
@@ -231,9 +240,19 @@ namespace Minesweeper.Controllers {
             }
         }
 
-        private void GameOverBoard(Panel clickedCell) {
-            //Reveal all bombs
-            clickedCell.BackgroundImage = Properties.Resources.bomb;
+        private void GameOverBoard(Panel mainBox) {
+            
+            foreach(Cell c in gameBoard) {
+
+                if (c.isBomb) {
+
+                    Panel bomb = GetPanelFromCellObj(c, mainBox);
+
+                    bomb.BackgroundImage = Properties.Resources.bomb;
+
+                }
+
+            }
 
         }
 
