@@ -20,7 +20,7 @@ namespace Minesweeper {
         private const int HEIGHT_OFFSET = 8;
         private string difficulty;
 
-        private GameController mainController;
+        private readonly GameController mainController;
         private Panel mainBox;
 
         public MainWindow() {
@@ -32,9 +32,11 @@ namespace Minesweeper {
 
             //Display a radio button menu to enable the user to choose a dificulty that is then passed to initBoard()
 
-            difficulty = "hard";
+            difficulty = "easy";
 
-            mainController.InitBoard(difficulty);
+            mainController.Dificulty = difficulty;
+
+            mainController.InitBoard();
 
             InitViewGrid();
 
@@ -73,7 +75,7 @@ namespace Minesweeper {
 
         private void CreateGrid() {
 
-            foreach (Cell c in mainController.gameBoard) {
+            foreach (Cell c in mainController.GameBoard) {
                 Panel cell = new Panel();
 
                 int xOffset = CELL_SIZE * c.xCoord;
@@ -95,7 +97,7 @@ namespace Minesweeper {
 
         private void CellClicked(object sender, MouseEventArgs e) {
 
-            if (!mainController.gameOver) {
+            if (!mainController.GameOver) {
                 mainController.ClickHandler((Panel)sender, e, mainBox);
             }
 
