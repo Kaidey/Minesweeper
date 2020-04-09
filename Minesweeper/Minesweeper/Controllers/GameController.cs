@@ -1,6 +1,7 @@
 ﻿using Minesweeper.Model;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
 using System.Text;
@@ -20,12 +21,33 @@ namespace Minesweeper.Controllers {
         private int _revealedCells;
 
         private Cell _clicedCell;
+
+        private readonly Form _mainWindow;
+
+        private Panel _gameBoard;
+
+        private Label _mineCountDisplay;
+
+        private Label _timer;
+
+        private DateTime _startTime;
+
+        public double ElapsedTime;
+
+        private Timer _gameTimer { get; set; }
+
         public bool GameOver {get; set; }
+
+        public int IdentifiedMines { get; set; }
 
         public string Dificulty { get; set; }
 
-        public GameController() {
+        public GameController(Form mw) {
             _revealedCells = 0;
+            _mainWindow = mw;
+            _gameTimer = new Timer();
+            _gameTimer.Interval = 1000;
+            _gameTimer.Tick += new EventHandler(TickHandler);
         }
 
         //MultiDimensional array declaration. Cell[][] would be the declaration for a jagged array
@@ -58,6 +80,22 @@ namespace Minesweeper.Controllers {
 
             }
 
+            IdentifiedMines = DIFICULTY[Dificulty].Item2;
+
+        }
+
+        public void UpdateUiElements() {
+            Control[] board = _mainWindow.Controls.Find("gameBoard", false);
+
+            _gameBoard = (Panel)board[0];
+
+            Control[] count = _mainWindow.Controls.Find("mineCountDisplay", false);
+
+            _mineCountDisplay = (Label)count[0];
+
+            Control[] timer = _mainWindow.Controls.Find("timer", false);
+
+            _timer = (Label)timer[0];
         }
 
         public int GetBoardSize(string difficulty) {
@@ -100,12 +138,28 @@ namespace Minesweeper.Controllers {
             return GameBoard[cellX, cellY];
         }
 
-        private Panel GetPanelFromCellObj(Cell cellObj, Panel mainBox) {
+        private Panel GetPanelFromCellObj(Cell cellObj, Panel _gameBoard) {
 
-            Control[] controls = mainBox.Controls.Find(cellObj.xCoord + " " + cellObj.yCoord, false);
+            Control[] controls = _gameBoard.Controls.Find(cellObj.xCoord + " " + cellObj.yCoord, false);
 
             return (Panel)controls[0];
 
+        }
+
+        private void TickHandler(object sender, EventArgs e) {
+
+
+            TimeSpan newTime = DateTime.Now - _startTime;
+
+            ElapsedTime = Math.Floor(newTime.TotalSeconds);
+
+            _timer.Invalidate();
+        }
+
+        public void StartTimer() {
+
+            _startTime = DateTime.Now;
+            _gameTimer.Start();
         }
 
         public bool CellIsOpen(Panel _clicedCell) {
@@ -113,9 +167,10 @@ namespace Minesweeper.Controllers {
             return GetCellObjectFromPanel(_clicedCell).isOpen;
         }
 
-        public void ClickHandler(Panel clickC, MouseEventArgs e, Panel mainBox) {
+        public void ClickHandler(Panel clickC, MouseEventArgs e) {
 
             _clicedCell = GetCellObjectFromPanel(clickC);
+            _mineCountDisplay.Invalidate();
 
             if (!_clicedCell.isOpen) {
 
@@ -124,35 +179,49 @@ namespace Minesweeper.Controllers {
                         HandleRightClick(clickC);
                         break;
                     case MouseButtons.Left:
-                        HandleLeftClick(clickC, mainBox);
+                        HandleLeftClick(clickC);
                         break;
                 }
 
             }else if (e.Button == MouseButtons.Middle) {
-                HandleMiddleClick( mainBox);
+                HandleMiddleClick();
             }
 
         }
 
         public void HandleRightClick(Panel clickC) {
 
-            clickC.BackgroundImage = Properties.Resources.flag;
-            _clicedCell.hasFlag = true;
+            _clicedCell = GetCellObjectFromPanel(clickC);
+
+            if (_clicedCell.hasFlag) {
+                clickC.BackgroundImage = null;
+                _clicedCell.hasFlag = false;
+                IdentifiedMines++;
+            } else {
+                clickC.BackgroundImage = Properties.Resources.flag;
+                _clicedCell.hasFlag = true;
+                IdentifiedMines--;
+            }
+
+            _mineCountDisplay.Invalidate();
+
         }
 
-        public void HandleLeftClick(Panel clickC, Panel mainBox) {
+        public void HandleLeftClick(Panel clickC) {
 
             int cellAmmount = (int)Math.Pow(DIFICULTY[Dificulty].Item1, 2);
             int bombAmmount = DIFICULTY[Dificulty].Item2;
 
+
             if((cellAmmount - bombAmmount) == _revealedCells) {
                 //Game Won Screen
+                _gameTimer.Stop();
                 Application.Exit();
             }
 
             if (_clicedCell.isBomb) {
-                RevealCell(_clicedCell, mainBox);
-                GameOverBoard(mainBox, _clicedCell);
+                RevealCell(_clicedCell);
+                GameOverBoard( _clicedCell);
                 GameOver = true;
             } else {
 
@@ -161,12 +230,12 @@ namespace Minesweeper.Controllers {
                     clickC.BackgroundImage = null;
                 }
 
-                ExpandCell(_clicedCell, mainBox);
+                ExpandCell(_clicedCell);
             }
 
         }
 
-        private void ExpandCell(Cell currentCell, Panel mainBox) {
+        private void ExpandCell(Cell currentCell) {
 
             List<Cell> neighbours = GetNeighbours(currentCell);
 
@@ -180,20 +249,18 @@ namespace Minesweeper.Controllers {
                 foreach(Cell neigh in neighbours) {
 
                     neigh.isChecked = true;
-                    ExpandCell(neigh, mainBox);
+                    ExpandCell(neigh);
 
                 }
 
             }
-            if (!currentCell.isOpen) {
-                RevealCell(currentCell, mainBox);
-            }
-            
-            
 
+            if (!currentCell.isOpen) {
+                RevealCell(currentCell);
+            }
         }
 
-        public void HandleMiddleClick(Panel mainBox) {
+        public void HandleMiddleClick() {
 
             List<Cell> neighs = GetNeighbours(_clicedCell);
 
@@ -202,23 +269,23 @@ namespace Minesweeper.Controllers {
             IEnumerable<Cell> notFlagged = from bNeigh in bombedNeighs where !bNeigh.hasFlag select bNeigh;
 
             if(notFlagged.Count() > 0) {
-                GameOverBoard(mainBox, null);
-                notFlagged.ToList().ForEach(cell => GetPanelFromCellObj(cell, mainBox).BackColor = Color.Red);
+                GameOverBoard(null);
+                notFlagged.ToList().ForEach(cell => GetPanelFromCellObj(cell, _gameBoard).BackColor = Color.Red);
                 GameOver = true;
             } else {
 
                 IEnumerable<Cell> notBombedNeighs = neighs.Except(bombedNeighs);
 
                 foreach(Cell c in notBombedNeighs) {
-                    RevealCell(c, mainBox);
+                    RevealCell(c);
                 }
             }
 
         }
 
-        private void RevealCell(Cell toReveal, Panel mainBox) {
+        private void RevealCell(Cell toReveal) {
 
-            Panel toRevealPanel = GetPanelFromCellObj(toReveal, mainBox);
+            Panel toRevealPanel = GetPanelFromCellObj(toReveal, _gameBoard);
 
             _revealedCells++;
             
@@ -257,13 +324,13 @@ namespace Minesweeper.Controllers {
             }
         }
 
-        private void GameOverBoard(Panel mainBox, Cell bombClicked) {
+        private void GameOverBoard(Cell bombClicked) {
 
             foreach (Cell c in GameBoard) {
 
                 if (c.isBomb) {
 
-                    Panel bomb = GetPanelFromCellObj(c, mainBox);
+                    Panel bomb = GetPanelFromCellObj(c, _gameBoard);
 
                     bomb.BackgroundImage = Properties.Resources.bomb;
                     bomb.BorderStyle = BorderStyle.None;
